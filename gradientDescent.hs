@@ -5,15 +5,19 @@ f (x,y) = (x-1)**2 + (y+4)**2 + 3
 dfdx :: [Double] -> [Double]
 dfdx (x,y) = ((x-1)*2, (y+4)*2)
 
-norm :: [Double] -> [Double] -> Double
-norm (a,b) (c,d) = a*c + b*d
+-- dot product
+dot :: [Double] -> [Double] -> Double
+--assumes clean input of same length vectors
+dot [] [] = 0
+dot (x:xs) (y:ys) = x*y + dot xs ys
 
+-- subtraction for vectors
 (-^) :: [Double] -> [Double] -> [Double]
-(-^) (a,b) (c,d) = (a-c, b-d)
+(-^) = zipWith (-)
 
-
+-- scalar multiplication of vector
 (*^) :: Double -> [Double] -> [Double]
-(*^) a (c,d) = (a*c, a*d)
+(*^) a = map (*a)
 
 -- test: satisfiesArmijo f dfdx (3,4) alpha sigma should
 -- be true only if alpha<=1-sigma
@@ -24,7 +28,7 @@ satisfiesArmijo :: ([Double] -> Double) ->
                    Double ->
                    Double ->
                    Bool
-satisfiesArmijo f dfdx x_n alpha sigma = f(x_n-^(alpha*^g_n))<=f(x_n)-alpha*sigma*(norm g_n g_n)
+satisfiesArmijo f dfdx x_n alpha sigma = f(x_n-^(alpha*^g_n))<=f(x_n)-alpha*sigma*(dot g_n g_n)
     where g_n = dfdx(x_n)
 
 -- test: nextStepGuess dfdx (3,4) (5,6) prevStep should
@@ -35,7 +39,7 @@ nextStepGuess :: ([Double] -> [Double]) ->
                  [Double] ->
                  Double ->
                  Double
-nextStepGuess dfdx x_n_min1 x_n prevStep = prevStep * (norm g_n_min1 g_n_min1) / (norm g_n g_n)
+nextStepGuess dfdx x_n_min1 x_n prevStep = prevStep * (dot g_n_min1 g_n_min1) / (dot g_n g_n)
     where g_n = dfdx x_n
           g_n_min1 = dfdx x_n_min1
 
@@ -77,7 +81,7 @@ gradSmallEnough :: ([Double] -> [Double]) ->
                    Double ->
                    [Double] ->
                    Bool
-gradSmallEnough dfdx firstGrad tol x = norm grad grad < tol * (1 + (norm firstGrad firstGrad))
+gradSmallEnough dfdx firstGrad tol x = dot grad grad < tol * (1 + (dot firstGrad firstGrad))
     where grad = dfdx x
 
 first :: (a,b,c) -> a

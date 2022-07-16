@@ -1,26 +1,26 @@
 
-f :: (Double, Double) -> Double
+f :: [Double] -> Double
 f (x,y) = (x-1)**2 + (y+4)**2 + 3
 
-dfdx :: (Double, Double) -> (Double, Double)
+dfdx :: [Double] -> [Double]
 dfdx (x,y) = ((x-1)*2, (y+4)*2)
 
-norm :: (Double, Double) -> (Double, Double) -> Double
+norm :: [Double] -> [Double] -> Double
 norm (a,b) (c,d) = a*c + b*d
 
-(-^) :: (Double, Double) -> (Double, Double) -> (Double, Double)
+(-^) :: [Double] -> [Double] -> [Double]
 (-^) (a,b) (c,d) = (a-c, b-d)
 
 
-(*^) :: Double -> (Double, Double) -> (Double, Double)
+(*^) :: Double -> [Double] -> [Double]
 (*^) a (c,d) = (a*c, a*d)
 
 -- test: satisfiesArmijo f dfdx (3,4) alpha sigma should
 -- be true only if alpha<=1-sigma
 -- returns true iff this step size satisfies armijo rule
-satisfiesArmijo :: ((Double, Double) -> Double) ->
-                   ((Double, Double) -> (Double, Double)) ->
-                   (Double, Double) ->
+satisfiesArmijo :: ([Double] -> Double) ->
+                   ([Double] -> [Double]) ->
+                   [Double] ->
                    Double ->
                    Double ->
                    Bool
@@ -30,9 +30,9 @@ satisfiesArmijo f dfdx x_n alpha sigma = f(x_n-^(alpha*^g_n))<=f(x_n)-alpha*sigm
 -- test: nextStepGuess dfdx (3,4) (5,6) prevStep should
 -- return 272/464 * prevStep
 -- returns an initial guess for the step size for the next x value
-nextStepGuess :: ((Double, Double) -> (Double, Double)) ->
-                 (Double, Double) ->
-                 (Double, Double) ->
+nextStepGuess :: ([Double] -> [Double]) ->
+                 [Double] ->
+                 [Double] ->
                  Double ->
                  Double
 nextStepGuess dfdx x_n_min1 x_n prevStep = prevStep * (norm g_n_min1 g_n_min1) / (norm g_n g_n)
@@ -42,9 +42,9 @@ nextStepGuess dfdx x_n_min1 x_n prevStep = prevStep * (norm g_n_min1 g_n_min1) /
 -- test: backtrack f dfdx (3,4) sigma initialGuess should
 -- halve initialGuess until it is less than 1-sigma
 -- returns a backtracked acceptable step size for x_n
-backtrack :: ((Double, Double) -> Double) ->
-             ((Double, Double) -> (Double, Double)) ->
-             (Double, Double) ->
+backtrack :: ([Double] -> Double) ->
+             ([Double] -> [Double]) ->
+             [Double] ->
              Double ->
              Double ->
              Double
@@ -61,21 +61,21 @@ backtrack f dfdx x_n sigma initialGuess =
 -- *function declaration* ... = (initialGuess, alpha){-x_n -^ (alpha *^ (dfdx x_n))-}
 -- calculates x_n+1 from x_n, using x_n-1 and alpha_n-1 to guide first step size guess
 -- returns (x_n+1, x_n, alpha_n)
-nextStep :: ((Double, Double) -> Double) ->
-            ((Double, Double) -> (Double, Double)) ->
-            (Double, Double) ->
-            (Double, Double) ->
+nextStep :: ([Double] -> Double) ->
+            ([Double] -> [Double]) ->
+            [Double] ->
+            [Double] ->
             Double ->
             Double ->
-            ((Double, Double), (Double, Double), Double)
+            ([Double], [Double], Double)
 nextStep f dfdx x_n x_n_min1 prevStep sigma = (x_n -^ (alpha *^ (dfdx x_n)), x_n, alpha)
     where alpha = backtrack f dfdx x_n sigma initialGuess
           initialGuess = nextStepGuess dfdx x_n_min1 x_n prevStep
 
-gradSmallEnough :: ((Double, Double) -> (Double, Double)) ->
-                   (Double, Double) ->
+gradSmallEnough :: ([Double] -> [Double]) ->
+                   [Double] ->
                    Double ->
-                   (Double, Double) ->
+                   [Double] ->
                    Bool
 gradSmallEnough dfdx firstGrad tol x = norm grad grad < tol * (1 + (norm firstGrad firstGrad))
     where grad = dfdx x
@@ -88,14 +88,14 @@ first (x,_,_) = x
 -- a sigma value for the Armijo rule, a max number of iterations allowed, and
 -- a tolerance for an acceptable final gradient - and returns a vector that
 -- is at a stationary point of the function to within this tolerance.
-gradientDescent :: ((Double, Double) -> Double) ->
-                   ((Double, Double) -> (Double, Double)) ->
-                   (Double, Double) ->
+gradientDescent :: ([Double] -> Double) ->
+                   ([Double] -> [Double]) ->
+                   [Double] ->
                    Double ->
                    Double ->
                    Int ->
                    Double ->
-                   (Double, Double)
+                   [Double]
 gradientDescent f dfdx x_0 alpha_0 sigma n tol =
     (first .
     head .

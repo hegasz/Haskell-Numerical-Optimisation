@@ -1,10 +1,25 @@
+module LinearEquationSolve where
+
 import Vectors
+import Data.List (sortBy)
+import Data.Function (on)
+import Control.Monad (foldM)
 
 -- solve Ax = b for x if any exists
 
 type Entry = Double
 type Row = [Entry]
 type Matrix = [Row]
+
+
+-- Matrix-Vector multiplication
+-- pre: correct dimensions
+multMV :: Matrix -> Vec -> Vec
+multMV    []      _   = []
+multMV    _      []   = []
+multMV (xs:xss) bs = dot xs bs : multMV xss bs
+    where dot xs ys = sum $ zipWith (*) xs ys
+
 
 -- Perfoms row operations on one row of a matrix 
 oneRow :: Row -> Row -> Entry -> Row
@@ -31,13 +46,16 @@ for i in range(n)
 -- pivot at U[i,i] and zeros below
 -- Then also fills column i of L with multiplier values
 -- that make LU decomposition work.
-innerLoop :: Int -> [(Row, Row)] -> [(Row, Row)]
+innerLoop :: Int -> [(Row, Row, Int)] -> [(Row, Row, Int)]
 innerLoop i weavedMatrices = foldl cons [head weavedMatrices] (tail weavedMatrices)
-    where cons acc (lowerE1, upperE1) = acc ++ [(lowerRow, upperRow)]
+    where cons acc (lowerE1, upperE1, trackingI) = acc ++ [(lowerRow, upperRow, trackingI)]
             where upperRow = oneRow upperE1 pivotRow multiplier
                   lowerRow = insertToRow lowerE1 i multiplier
-                  pivotRow = snd (head acc)
+                  pivotRow = (\(_,x,_)->x) (head acc)
                   multiplier = (upperE1!!i)/(pivotRow!!i)
+
+
+
 
 
 -- Repeatedly applies innerLoop through all i values
@@ -45,28 +63,61 @@ innerLoop i weavedMatrices = foldl cons [head weavedMatrices] (tail weavedMatric
 -- b = innerLoop 0 a
 -- (head b) : innerLoop 1 (tail b)
 -- etc ...
+-- Performs partial pivoting for each pivot to ensure
+-- non-zero pivots at all times (if possible).
 -- pre: matrix is square
-outerLoop :: [(Row,Row)] -> [(Row,Row)]
-outerLoop weavedMatrices = foldl cons weavedMatrices [0..length weavedMatrices-1]
-    where cons acc i = take i acc ++ innerLoop i (drop i acc)
+outerLoop :: [(Row,Row,Int)] -> Either String [(Row,Row,Int)]
+outerLoop weavedMatrices = foldM cons weavedMatrices [0..length weavedMatrices-1]
+    where cons acc i = let sanitised = sanitise (drop i acc) i
+                       in case sanitised of
+                            Nothing -> Left "no non-zero pivots"
+                            Just xs -> Right (take i acc ++ innerLoop i xs)
 
 
-unWeaver :: [(Row,Row)] -> (Matrix, Matrix)
-unWeaver [] = ([],[])
-unWeaver ((l,u):xs) = (l:ls, u:us)
-    where (ls,us) = unWeaver xs
 
--- Weaves a input matrix in with an identity matrix
-weaver :: Int -> Int -> Matrix -> [(Row,Row)]
-weaver i n [] = []
-weaver i n (xs:xss) = (idRow, xs) : weaver (i+1) n xss
-    where idRow = replicate i 0 ++ [1] ++ replicate (n-i-1) 0
+
+-- Rearranges upper matrix part of weaved matrices to make
+-- pivot non-zero. Also rearranges tracking indices to 
+-- ensure corresponding changes are encoded in permutation
+-- matrix later. Returns `Nothing` if no non-zero pivots are
+-- found, i.e. matrix is underdetermined or singular.
+-- @param i the pivot index within a row
+-- @param xs a weaved matrix (upper,lower,trackingIndex)
+sanitise :: [(Row,Row,Int)] -> Int -> Maybe [(Row,Row,Int)]
+sanitise xs i | abs(((!!i) . (\(_,x,_)->x) . head) xs) > 3e-16 = Just xs
+              | abs(((!!i) . fst . head) sorted) <= 3e-16 = Nothing
+              | otherwise = Just (zipWith (\l (u,i) -> (l,u,i)) lowerOnly sorted)
+    where sorted = sortBy (flip compare `on` (\(xs,_)->xs!!i)) noLower -- decreasing sort
+          noLower = map (\(_,upper,index)->(upper,index)) xs
+          lowerOnly = map (\(lower,_,_)->lower) xs -- don't rearrange lower matrix 
+
+-- Unweaves lower and upper rows and creates permutation
+-- matrix P from trackingIndices such that PA=LU
+unWeaver :: [(Row,Row,Int)] -> (Matrix, Matrix, Matrix)
+unWeaver [] = ([],[],[])
+unWeaver ((l,u,i):xs) = (l:ls, u:us, [if j==i then 1 else 0 | j<-[0..length l-1]]:ps)
+    where (ls,us,ps) = unWeaver xs
+
+
+-- Weaves an input matrix in with an identity matrix and row indices
+-- @param n matrix size
+weaver :: Int -> Matrix -> [(Row,Row,Int)]
+weaver n = weaverInner 0 n
+    where weaverInner i n [] = []
+          weaverInner i n (xs:xss) = (idRow, xs, i) : weaverInner (i+1) n xss
+            where idRow = replicate i 0 ++ [1] ++ replicate (n-i-1) 0
+
 
 -- @param matrix an input matrix A
--- @returns (L,U) such that L is lower triangular,
---          U is upper triangular, and A = LU.
-decompLU :: Matrix -> (Matrix, Matrix)
-decompLU matrix = unWeaver . outerLoop . weaver 0 (length matrix) $ matrix
+-- @returns (L,U,P) such that L is lower triangular,
+--          U is upper triangular, P is a permutation
+--          matrix and PA = LU.
+decompLUP :: Matrix -> Either String (Matrix, Matrix, Matrix)
+decompLUP matrix = let result = outerLoop . weaver (length matrix) $ matrix
+                  in case result of
+                    Left string -> Left string
+                    Right weaved -> Right (unWeaver weaved)
+    
 
 -- Augments a matrix with a solution and a row index for easier folding
 augmenter :: Matrix -> Vec -> [(Row,Entry,Int)]
@@ -103,23 +154,19 @@ backwardSub upper b = foldr cons [] (augmenter upper b)
 
 
 -- Solves Ax = b for x if a solution exists.
--- Performs LU decomposition then solves by forward and
--- backward substitution via the substitution Ux=y into LUx=b
-solve :: Matrix -> Vec -> Vec
-solve matrix b = backwardSub upper y
-    where (lower,upper) = decompLU matrix
-          y = forwardSub lower b
+-- Performs LU decomposition with partial pivoting 
+-- then solves by forward and backward substitution
+-- via the substitution Ux=y into LUx=b.
+solve :: Matrix -> Vec -> Either String Vec
+solve matrix b = let result = decompLUP matrix
+                 in case result of 
+                    Left _ -> Left "No solution"
+                    Right (lower,upper,perm) -> Right (backwardSub upper y)
+                            where y = forwardSub lower (multMV perm b)
 
 
-a :: Matrix
-a = [[2,4,5,6],
-     [-1,2,8.5,1],
-     [3,8,3,-3],
-     [5,2,1.5,6.4]]
-
--- PARTIAL PIVOTING PLS
-b :: Matrix
-b = [[0,4,5,6],
-     [-1,2,8.5,1],
-     [3,8,3,-3],
-     [5,2,1.5,6.4]]
+{-}
+For tests:
+solve [[0,3,2,-1],[1,1,1,1],[1,4,-3,2],[-1,2,1,1]] [-1,13,10,1]
+Right [6.0,0.0,2.0,5.0]
+-}

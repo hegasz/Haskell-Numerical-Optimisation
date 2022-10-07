@@ -1,0 +1,59 @@
+cabal-version:      2.4
+name:               Haskell-Numerical-Optimisation
+version:            0.1.0.0
+synopsis:           Numerical optimisation library
+homepage:
+license:            NONE
+author:             Henry Gasztowtt
+maintainer:         henry.gasztowtt@gmail.com
+
+-- Extra files to be distributed with the package, such as examples or a README.
+extra-source-files: CHANGELOG.md
+
+
+library
+    -- Modules exported by the library.
+    exposed-modules:  GradientDescent
+                    , LinearEquationSolver
+                    , NewtonOptimisation
+                    , VectorsInternal
+
+    -- Modules included in this library but not exported.
+    other-modules:   
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+
+    -- Other library packages from which modules are imported.
+    build-depends:    base ^>=4.16.3.0
+
+    -- Directories containing source files.
+    hs-source-dirs:   src
+
+    default-language: Haskell2010
+
+test-suite Haskell-Numerical-Optimisation-test
+    default-language: Haskell2010
+
+    -- The interface type and version of the test suite.
+    type:             exitcode-stdio-1.0
+
+    -- Directories containing source files.
+    hs-source-dirs:   test
+
+    -- The entrypoint to the test suite.
+    main-is:          Spec.hs
+
+    other-modules:    
+                    
+
+    -- Test dependencies.
+    build-depends:    base ^>=4.16.3.0
+                    , Haskell-Numerical-Optimisation
+                    --, GradientDescent
+                    --, VectorsInternal
+                    , hspec
+                    , hspec-discover
+                    , QuickCheck
+
+

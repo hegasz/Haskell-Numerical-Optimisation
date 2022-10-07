@@ -1,0 +1,57 @@
+Test suite Haskell-Numerical-Optimisation-test: RUNNING...
+
+GradientDescent
+  All
+    Armijo
+      Armijo 1 [✔]
+      Armijo 2 [✔]
+      Armijo 3 [✔]
+      Armijo 4 [✔]
+    NextStepGuess
+      NextStepGuess 1 [✔]
+      NextStepGuess 2 [✔]
+    Backtrack
+      Backtrack 1 [✔]
+      Backtrack 2 [✔]
+      Backtrack 3 [✔]
+    NextStep
+      Next Step 1 [✔]
+    GradientDescent
+      Descent 1 [✔]
+      Rosenbrock banana function descent [✔]
+LinearEquationSolver
+  All
+    OneRow
+      works with zero multiplier [✔]
+      works on standard input [✔]
+    InnerLoop
+      works on a random example [✔]
+      works a second time on a random example [✔]
+    OuterLoop
+      works on a standard example [✔]
+      works on a zero pivot example [✔]
+    Sanitise
+      works on a random example [✔]
+    UnWeaver
+      works on a random example [✔]
+    DecompLUP
+      works on a standard example [✔]
+      works with zero pivots [✔]
+      throws an error on a singular matrix [✔]
+    Solve
+      works on a standard example [✔]
+      works on another standard example [✔]
+      works if we rearrange previous example [✔]
+      works on a zero pivot example [✔]
+      doesn't work on a singular system [✔]
+NewtonOptimisation
+  All
+    NewtonOptimise
+      works on a standard polynomial function [✔]
+      works on a quadratic function [✔]
+      works on Rosenbrock banana function [✔]
+
+Finished in 0.0898 seconds
+31 examples, 0 failures
+Test suite Haskell-Numerical-Optimisation-test: PASS
+Test suite logged to: /Users/Henry_1/Documents/Haskell-Numerical-Optimisation/dist-newstyle/build/aarch64-osx/ghc-9.2.4/Haskell-Numerical-Optimisation-0.1.0.0/t/Haskell-Numerical-Optimisation-test/test/Haskell-Numerical-Optimisation-0.1.0.0-Haskell-Numerical-Optimisation-test.log

@@ -21,9 +21,6 @@ library
     -- Modules included in this library but not exported.
     other-modules:   
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-
     -- Other library packages from which modules are imported.
     build-depends:    base ^>=4.16.3.0
 
@@ -46,12 +43,9 @@ test-suite Haskell-Numerical-Optimisation-test
 
     other-modules:    
                     
-
     -- Test dependencies.
     build-depends:    base ^>=4.16.3.0
                     , Haskell-Numerical-Optimisation
-                    --, GradientDescent
-                    --, VectorsInternal
                     , hspec
                     , hspec-discover
                     , QuickCheck

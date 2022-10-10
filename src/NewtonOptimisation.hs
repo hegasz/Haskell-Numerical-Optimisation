@@ -7,7 +7,7 @@ import OptimisationUtils
 
 
 -- Performs one step of Newton optimisation
-nextStep :: (Vec -> Double) ->
+nextStep :: (Vec -> Entry) ->
             (Vec -> Vec) ->
             (Vec -> Matrix) ->
             Double ->
@@ -22,7 +22,7 @@ nextStep f dfdx hess sigma x_n = x_n +^ (alpha *^ dir_n)
 -- a tolerance for an acceptable final gradient - and returns a vector that
 -- is at a stationary point of the function to within this tolerance.
 -- Uses Newton's method for optimisation.
-newtonOptimisation :: (Vec -> Double) ->
+newtonOptimisation :: (Vec -> Entry) ->
                    (Vec -> Vec) ->
                    (Vec -> Matrix) ->
                    Vec ->

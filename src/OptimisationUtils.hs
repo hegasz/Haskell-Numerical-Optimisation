@@ -3,7 +3,7 @@ module OptimisationUtils where
 
 -- Returns true iff this step size satisfies Armijo rule
 -- with sigma value given.
-satisfiesArmijo :: (Vec -> Double) ->
+satisfiesArmijo :: (Vec -> Entry) ->
                    (Vec -> Vec) ->
                    Vec ->
                    Double ->
@@ -20,7 +20,7 @@ satisfiesArmijo f dfdx x_n alpha sigma = f(x_n-^(alpha*^g_n))<=f x_n-alpha*sigma
 --        x_n the current guess
 --        sigma the sigma value for armijo rule
 --        an initial guess for the step size (eta reduced parameter)
-backtrack :: (Vec -> Double) ->
+backtrack :: (Vec -> Entry) ->
              (Vec -> Vec) ->
              Vec ->
              Double ->

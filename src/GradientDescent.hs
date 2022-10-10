@@ -18,7 +18,7 @@ import OptimisationUtils
 -- Returns (x_n+1, x_n, alpha_n)
 -- nextStep has constant parameters f, dfdx and sigma
 -- but churns through new values of x_n, x_n_min1 and prevStep
-nextStep :: (Vec -> Double) ->
+nextStep :: (Vec -> Entry) ->
             (Vec -> Vec) ->
             Vec ->
             Vec ->
@@ -36,7 +36,7 @@ nextStep f dfdx x_n x_n_min1 prevStep sigma = (x_n -^ (alpha *^ dfdx x_n), x_n, 
 -- is at a stationary point of the function to within this tolerance.
 -- Uses classic gradient descent.
 -- pre: alpha_0 is large enough
-gradientDescent :: (Vec -> Double) ->
+gradientDescent :: (Vec -> Entry) ->
                    (Vec -> Vec) ->
                    Vec ->
                    Double ->

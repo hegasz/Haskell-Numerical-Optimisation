@@ -42,9 +42,6 @@ innerLoop i weavedMatrices = foldl cons [head weavedMatrices] (tail weavedMatric
                   multiplier = (upperE1!!i)/(pivotRow!!i)
 
 
-
-
-
 -- Repeatedly applies innerLoop through all i values
 -- as follows:
 -- b = innerLoop 0 a
@@ -59,8 +56,6 @@ outerLoop weavedMatrices = foldM cons weavedMatrices [0..length weavedMatrices-1
                        in case sanitised of
                             Nothing -> Left "no non-zero pivots"
                             Just xs -> Right (take i acc ++ innerLoop i xs)
-
-
 
 
 -- Rearranges upper matrix part of weaved matrices to make
